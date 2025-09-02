@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BOM Tree With Financial Analysis</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #dbeafe;
+      --secondary: #64748b;
+      --success: #16A34A;
+      --danger: #DC2626;
+      --warning: #d97706;
+      --info: #0d9488;
+      --light: #f8fafc;
+      --dark: #0f172a;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --shadow: rgba(0, 0, 0, 0.08);
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: var(--light);
+      color: #334155;
+      line-height: 1.5;
+    }
+    
+    .container {
+      max-width: 98vw;
+      margin: 24px auto;
+      padding: 0 16px;
+      position: relative;
+    }
+
+    /* Modern What-If Button */
+    .whatif-btn {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 10px;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+      margin-bottom: 10px;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .whatif-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: 0.5s;
+    }
+    
+    .whatif-btn:hover::before {
+      left: 100%;
+    }
+    
+    .whatif-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+    }
+    
+    .whatif-btn.active {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, #1e40af 100%);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3), inset 0 1px 1px rgba(255,255,255,0.2);
+    }
+
+    /* Modern What-If Panel */
+    .whatif-panel {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px var(--shadow);
+      padding: 10px;
+      margin-bottom: 8px;
+      display: none;
+      transition: all 0.3s ease;
+    }
+    
+    .whatif-panel.active { 
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+    }
+    
+    .panel-header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .panel-title {
+      font-size: 12px;
+      font-weight: bolder;
+      color: var(--dark);
+    }
+    
+    .slider-card {
+      background: var(--light);
+      border-radius: 10px;
+      padding: 12px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      border: 1px solid var(--border);
+    }
+    
+    .slider-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px var(--shadow);
+    }
+    
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .slider-label {
+      font-size: 13px;
+      font-weight: bolder;
+      color: var(--dark);
+    }
+    
+    .slider-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary-dark);
+      background: var(--primary-light);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    
+    input[type=range] {
+      width: 100%;
+      height: 4px;
+      -webkit-appearance: none;
+      background: #cbd5e1;
+      border-radius: 3px;
+      outline: none;
+    }
+    
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .reset-btn {
+      background: var(--secondary);
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    
+    .reset-btn:hover {
+      background: #475569;
+    }
+
+    /* Financial Inputs Container - FIXED */
+    .financial-inputs-container {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      height: 126px;
+    }
+    
+    .financial-inputs-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 8px var(--shadow);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      justify-content: center;
+      height: 100%;
+      width: 280px;
+    }
+    
+    .financial-input-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .financial-input-label {
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--secondary);
+    }
+    
+    .financial-input-value {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--light);
+      padding: 6px 5px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    
+    .financial-input-value input {
+      border: none;
+      background: transparent;
+      width: 80px;
+      text-align: right;
+      font-size: 14px;
+    }
+    
+    .financial-input-value input:focus {
+      outline: none;
+    }
+
+    /* Cash Flow Table - COMPACT STYLING */
+    .cashflow-table {
+      font-size: 10px !important;
+      font-weight: bold;
+      text-align: right;
+    }
+    
+    .cashflow-table th, 
+    .cashflow-table td {
+      padding: 6px 6px !important;
+      line-height: 1;
+    }
+
+    .cashflow-table th {
+      background-color: var(--secondary);
+      color: white;
+      font-size: 12px !important;
+      text-transform: uppercase;
+      font-weight: bold;
+      text-align: center;
+    }
+    
+    .cashflow-table tr {
+      height: 20px;
+    }
+
+    .cashflow-table td {
+      font-size: 10px !important;
+      font-weight: bold;
+      text-align: right;
+    }
+
+    /* KPI Cards */
+    #kpi-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+    
+  .kpi-card {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--card-bg);
+  box-shadow: 
+    0 4px 10px rgba(0,0,0,0.18),   /* main dark shadow */
+    0 2px 4px rgba(0,0,0,0.12);    /* sharper edge */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 6px 14px rgba(0,0,0,0.25),   /* stronger hover */
+    0 3px 6px rgba(0,0,0,0.18);
+}
+    
+    .kpi-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .kpi-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      margin-right: 12px;
+    }
+    
+    .kpi-icon.blue   { background: #dbeafe; color: #1d4ed8; }
+    .kpi-icon.orange { background: #ffedd5; color: #ea580c; }
+    .kpi-icon.teal   { background: #ccfbf1; color: #0d9488; }
+    .kpi-icon.gold   { background: #fef3c7; color: #d97706; }
+    .kpi-icon.purple { background: #e9d5ff; color: #7e22ce; }
+    .kpi-icon.pink   { background: #fce7f3; color: #be185d; }
+    
+    .kpi-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--secondary);
+    }
+    
+    .kpi-sections {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    
+    .kpi-section {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    
+    .baseline-section {
+      background: var(--light);
+      border: 1px solid var(--border);
+    }
+    
+    .whatif-section {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+    }
+    
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--secondary);
+      margin-bottom: 6px;
+    }
+    
+    .kpi-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 2px;
+    }
+    
+    .change-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    
+    .change-positive {
+      color: var(--success);
+      font-weight: 600;
+    }
+    
+    .change-negative {
+      color: var(--danger);
+  font-weight: 600;
+    }
+
+    .kpi-value-container {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    /* Table styling - MORE COMPACT */
+    .table-container {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px var(--shadow);
+      overflow-x: auto;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      table-layout: auto;
+      min-width: 1000px;
+      table-layout: fixed;  
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 8px 8px;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;             /* enable clipping */
+      text-overflow: ellipsis;      /* ... */
+      /*min-width: 50px;*/
+    }
+
+    th {
+      background: var(--secondary);
+      font-weight: bold;
+      text-align: center;
+      color: #f1f5f9;
+      position: sticky;
+      top: 0;
+      z-index: 2;                   /* ensure above cells */
+    }
+
+    td {
+      border: 1px solid var(--border);
+      padding: 8px 8px;
+      font-size: 13px;
+      white-space: nowrap;
+      min-width: 50px;
+      text-align: left;
+    }
+
+    tr:nth-child(even) {
+      background: var(--light);
+    }
+
+    .bom-indent {
+      display: flex;
+      align-items: center;
+    }
+    
+    .bom-indent.level-1 { margin-left: 0px; }
+    .bom-indent.level-2 { margin-left: 20px; }
+    .bom-indent.level-3 { margin-left: 40px; }
+    .bom-indent.level-4 { margin-left: 60px; }
+
+    /* Remove input styling for plain view */
+    .table-container input[type="text"], 
+    .table-container input[type="number"], 
+    .table-container select {
+      all: initial;
+      font: inherit;
+      color: inherit;
+      width: 100%;
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      outline: none !important;
+      font-size: 13px;
+    }
+
+    /* Remove number input spinners */
+    .table-container input[type="number"]::-webkit-outer-spin-button,
+    .table-container input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    .table-container input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    /* Focus state for inputs */
+    .table-container input[type="text"]:focus, 
+    .table-container input[type="number"]:focus, 
+    .table-container select:focus {
+      background: #f0f9ff !important;
+      border-radius: 3px;
+    }
+
+    /* Select dropdown styling */
+    .table-container select {
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+      background-repeat: no-repeat;
+      background-position-x: 100%;
+      background-position-y: center;
+      padding-right: 20px !important;
+    }
+
+    .icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #e0f2fe;
+      text-align: center;
+      color: #0c4a6e;
+      font-size: 12px;
+      line-height: 20px;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+
+    .sum-cell {
+      font-weight: 600;
+      background: #f0fdf4;
+      user-select: none;
+      color: var(--success);
+    }
+
+    /* Action buttons - SMALLER */
+    .compact-controls {
+      display: flex;
+      gap: 4px;
+    }
+
+    button.action-btn {
+      cursor: pointer;
+      color: white;
+      border: none;
+      padding: 2px 5px;
+      font-size: 14px;
+      border-radius: 4px;
+      transition: background 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button.add-btn {
+      background: var(--success);
+    }
+
+    button.add-btn:hover {
+      background: #15803d;
+    }
+
+    button.delete-btn {
+      background: var(--danger);
+    }
+
+    button.delete-btn:hover {
+      background: #b91c1c;
+    }
+
+    /* Cell wrapper for positioning flags */
+    .cell-wrapper {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+
+    /* Value change indicator */
+    .value-change {
+      position: absolute;
+      bottom: -6px;
+      right: -6px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-size: 9px;
+      font-weight: bold;
+      padding: 2px 4px;
+      border-radius: 3px;
+      pointer-events: none;
+      display: inline-block;
+      z-index: 10;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Positive/negative change indicators */
+    .value-change.positive {
+      background: #fecaca;
+      color: var(--danger);
+    }
+    
+    .value-change.negative {
+      background: #bbf7d0;
+      color: var(--success);
+    }
+
+    /* Corner flag for adjusted values */
+    .corner-flag {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #fde68a;
+      color: #92400e;
+      font-size: 9px;
+      font-weight: bold;
+      padding: 2px 4px;
+      border-radius: 3px;
+      pointer-events: none;
+      display: none;
+      z-index: 10;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Currency symbol styling - FIXED */
+    .currency-input {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    
+    .currency-symbol {
+      margin-right: 4px;
+      color: var(--secondary);
+      font-weight: 500;
+      font-size: 13px;
+    }
+    
+    .currency-input input {
+      flex: 1;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    /* Container for both BOM and Cash Flow tables */
+    .table-container {
+      border-radius: 12px;
+      padding: 10px;
+      margin-top: 10px;
+    }
+    
+    .table-container h3 {
+      margin-top: 0;
+      margin-bottom: 0;
+      font-size: 14px;
+    }
+
+    /* Toggle button for cash flow table */
+    .toggle-table-btn {
+      background: var(--light);
+      color: var(--secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 6px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 1px;
+      transition: background 0.2s ease;
+    }
+    
+    .toggle-table-btn:hover {
+      background: var(--primary);
+      color: var(--light);
+    }
+
+    /* Layout for financial inputs and KPI cards */
+    .financial-kpi-container {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .sgna-input {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+      .financial-kpi-container {
+        grid-template-columns: 1fr;
+      }
+      
+      .financial-inputs-container {
+        flex-direction: column;
+        height: auto;
+      }
+      
+      .financial-inputs-card {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .whatif-panel.active {
+        grid-template-columns: 1fr;
+      }
+      
+      .kpi-sections {
+        flex-direction: column;
+      }
+      
+      th, td {
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+      
+      .container {
+        padding: 0 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="whatif-btn" id="toggleWhatIf">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
+      What-If Analysis
+    </button>
+
+    <div class="whatif-panel" id="whatIfPanel">
+      <div class="panel-header">
+        <div class="panel-title">Adjust Cost Parameters</div>
+        <button class="reset-btn" id="baselineBtn">Reset to Baseline</button>
+      </div>
+
+      <div class="slider-card">
+        <div class="slider-header">
+          <div class="slider-label">RM Rate Change</div>
+          <div class="slider-value" id="rmVal">0%</div>
+        </div>
+        <input type="range" id="rmSlider" min="-50" max="50" value="0">
+      </div>
+
+      <div class="slider-card">
+        <div class="slider-header">
+          <div class="slider-label">Labor Rate Change</div>
+          <div class="slider-value" id="laborVal">0%</div>
+        </div>
+        <input type="range" id="laborSlider" min="-50" max="50" value="0">
+      </div>
+
+      <div class="slider-card">
+        <div class="slider-header">
+          <div class="slider-label">MHR Variable Change</div>
+          <div class="slider-value" id="burdenVal">0%</div>
+        </div>
+        <input type="range" id="burdenSlider" min="-50" max="50" value="0">
+      </div>
+
+      <div class="slider-card">
+        <div class="slider-header">
+          <div class="slider-label">Currency Impact</div>
+          <div class="slider-value" id="fxVal">0%</div>
+        </div>
+        <input type="range" id="fxSlider" min="-50" max="50" value="0">
+      </div>
+
+      <div class="slider-card">
+        <div class="slider-header">
+          <div class="slider-label">Tariff Impact</div>
+          <div class="slider-value" id="tariffVal">0%</div>
+        </div>
+        <input type="range" id="tariffSlider" min="0" max="50" value="0">
+      </div>
+
+      <div class="slider-card">
+        <div class="slider-header">
+          <div class="slider-label">Volume Impact</div>
+          <div class="slider-value" id="volumeVal">0%</div>
+        </div>
+        <input type="range" id="volumeSlider" min="-50" max="50" value="0">
+      </div>
+    </div>
+
+    <div class="financial-kpi-container">
+      <div class="financial-inputs-container">
+        <div class="financial-inputs-card">
+          <div class="financial-input-row">
+            <div class="financial-input-label">Sell Price</div>
+            <div class="financial-input-value">
+              <span>$</span>
+              <input type="number" id="sellPriceInput" value="26.75" min="0" step="1">
+            </div>
+          </div>
+          <div class="financial-input-row">
+            <div class="financial-input-label">Discount Rate</div>
+            <div class="financial-input-value">
+              <input type="number" id="discountRateInput" value="10" min="0" step="0.1">
+              <span>%</span>
+            </div>
+          </div>
+          <div class="financial-input-row">
+            <div class="financial-input-label">SGA&P %</div>
+            <div class="financial-input-value sgna-input">
+              <input type="number" id="sgnaPercentageInput" value="15" min="0" step="0.1">
+              <span>%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="kpi-cards"></div>
+    </div>
+
+    <div class="table-container">
+      <button class="toggle-table-btn" id="toggleCashFlowTable">Show/Hide Cash Flow Table</button>
+      <h3>Cash Flow Projection (10 Years)</h3>
+      <table class="cashflow-table" id="cashflow-table" style="display: none;">
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Volume</th>
+            <th>Investment</th>
+            <th>Revenue</th>
+            <th>COGS</th>
+            <th>Net Cash Flow</th>
+            <th>Discounted Cash Flow</th>
+          </tr>
+        </thead>
+        <tbody id="cashflow-body">
+          </tbody>
+      </table>
+    </div>
+
+    <div class="table-container">
+      <table id="bom-table">
+        <thead>
+          <tr id="table-head-row"></tr>
+        </thead>
+        <tbody id="table-body-rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Data structures and constants
+    const editableKeys = new Set([
+      "itemName", "commodity", "qty", "wt", "rmSourceCountry", "curr", "rmRate", "machine",
+      "ct", "op", "lr", "br"
+    ]);
+
+const itemTypeOptions = [
+  { key: "FG", label: "Finished Good", icon: "🚀" }, // A ready-to-launch product
+  { key: "Comp", label: "Component", icon: "🔩" }, // A single nut or bolt, a foundational part
+  { key: "RM", label: "Raw Material", icon: "🏗️" }, // A building block being used in construction
+  { key: "OP", label: "Operation", icon: "🛠️" }, // The crossed tools suggest an active process
+  { key: "TL", label: "Tool", icon: "⚙️" }, // The gear can also represent a tool
+  { key: "Other", label: "Other", icon: "🗃️" } // A file box, suggesting miscellaneous items
+];
+
+    // Country to currency mapping
+    const countryCurrencyMap = {
+      "USA": "USD",
+      "China": "CNY",
+      "India": "INR",
+      "Japan": "JPY",
+      "Germany": "EUR",
+      "UK": "GBP",
+      "Mexico": "MXN",
+      "Canada": "CAD"
+    };
+
+    // Exchange rates (to USD)
+    const exchangeRates = {
+      "USD": 1,
+      "EUR": 1.12,
+      "GBP": 1.3,
+      "CNY": 0.15,
+      "INR": 0.014,
+      "JPY": 0.0091,
+      "MXN": 0.06,
+      "CAD": 0.8
+    };
+
+    // Currency symbols
+    const currencySymbols = {
+      "USD": "$",
+      "EUR": "€",
+      "GBP": "£",
+      "CNY": "¥",
+      "INR": "₹",
+      "JPY": "¥",
+      "MXN": "$",
+      "CAD": "$"
+    };
+
+    // Updated columns with SGA&P column
+    const columns = [
+      { key: "actions", label: "Actions", width: "50px" },
+      { key: "itemType", label: "Item Type", width: "120px" },
+      { key: "itemName", label: "Item Name", width: "160px" },
+      { key: "level", label: "Level", width: "40px" },
+      //{ key: "commodity", label: "Commodity", width: "120px" },
+      { key: "qty", label: "Qty", width: "30px" },
+      { key: "wt", label: "Weight", width: "50px" },
+      { key: "rmSourceCountry", label: "Source Country", width: "100px" },
+      { key: "curr", label: "RM Currency", width: "80px" },
+      { key: "rmRate", label: "RM Rate", width: "70px" },
+      { key: "rmRateUSD", label: "RM Rate $", width: "90px", formula: row => row.rmRateUSD ? `$${row.rmRateUSD.toFixed(2)}` : "" },
+      { key: "rmCost", label: "RM Cost", formula: row => row.rmCost ? `$${row.rmCost.toFixed(2)}` : "", width: "90px" },
+      { key: "machine", label: "Machine", width: "100px" },
+      { key: "ct", label: "Cycle Time", width: "70px" },
+      { key: "op", label: "#Operator", width: "70px" },
+      { key: "lr", label: "Labor Rate", formula: row => row.lr ? `$${row.lr.toFixed(2)}` : "", width: "90px" },
+      { key: "br", label: "Burden Rate", formula: row => row.br ? `$${row.br.toFixed(2)}` : "", width: "90px" },
+      { key: "processCost", label: "Process Cost", formula: row => row.processCost ? `$${row.processCost.toFixed(2)}` : "", width: "90px" },
+      { key: "cost", label: "Cost", formula: row => row.cost ? `$${row.cost.toFixed(2)}` : "", width: "90px" },
+      { key: "rollupCostTotal", label: "Total Cost", formula: row => row.sumCostInclusive ? `$${row.sumCostInclusive.toFixed(2)}` : "", width: "90px", 
+        showCondition: row => row.level === 2 }, // Only show on Level 2
+      { key: "sgnaCost", label: "SGA&P Cost", formula: row => (row.sgnaCost || row.sgnaCost === 0) ? `$${row.sgnaCost.toFixed(2)}` : "", width: "90px", 
+        showCondition: row => row.level === 1 }, // Only show on Level 1
+      { key: "rollupCostChildrenOnly", label: "Ext Total Cost", formula: row => row.sumCostChildrenOnly ? `$${row.sumCostChildrenOnly.toFixed(2)}` : "", width: "90px", 
+        showCondition: row => row.level === 1 } // Only show on Level 1
+    ];
+
+    // Financial parameters for the 10-year program
+    const financialParams = {
+      programYears: 10,
+      sellPrice: 26.75,
+      discountRate: 0.10,
+      sgnaPercentage: 15,
+      yearlyVolumes: [0, 50000, 75000, 100000, 125000, 150000, 175000, 140000, 110000, 80000, 40000],
+      yearlyInvestments: [1000000, 500000, 0, 800000, 0, 0, 0, 0, 0, 0, 0]
+    };
+
+    // Initial data
+let data = [
+  { id: 1, parentId: -1, itemType: "FG", itemName: "Front Seat Back", level: 1, cost: 0, commodity: "", qty: 1, wt: 0, rmSourceCountry: "USA", curr: "USD", rmRate: 0, rmCost: 0, machine: "", ct: 0, op: 0, lr: 0, br: 0, processCost: 0, sumCostChildrenOnly: 0, sgnaCost: 0 },
+  { id: 2, parentId: 1, itemType: "Comp", itemName: "Side Shield", level: 2, cost: 0, commodity: "", qty: 1, wt: 0, rmSourceCountry: "USA", curr: "USD", rmRate: 0, rmCost: 0, machine: "", ct: 0, op: 0, lr: 0, br: 0, processCost: 0, sumCostChildrenOnly: 0, sgnaCost: 0 },
+  { id: 3, parentId: 2, itemType: "RM", itemName: "ABS", level: 3, cost: 0, commodity: "", qty: 1, wt: 750, rmSourceCountry: "China", curr: "CNY", rmRate: 35, rmCost: 0, machine: "", ct: 0, op: 0, lr: 0, br: 0, processCost: 0, sumCostChildrenOnly: 0, sgnaCost: 0 },
+  { id: 4, parentId: 2, itemType: "OP", itemName: "500T IM", level: 3, cost: 0, commodity: "", qty: 1, wt: 0, rmSourceCountry: "China", curr: "CNY", rmRate: 0, rmCost: 0, machine: "500 T IM Press", ct: 45, op: 1, lr: 25, br: 180, processCost: 0, sumCostChildrenOnly: 0, sgnaCost: 0 },
+  { id: 5, parentId: 1, itemType: "Comp", itemName: "St. Bracket", level: 2, cost: 0, commodity: "", qty: 1, wt: 0, rmSourceCountry: "China", curr: "CNY", rmRate: 0, rmCost: 0, machine: "", ct: 0, op: 0, lr: 0, br: 0, processCost: 0, sumCostChildrenOnly: 0, sgnaCost: 0 },
+  { id: 6, parentId: 5, itemType: "RM", itemName: "HSLA", level: 3, cost: 0, commodity: "", qty: 1, wt: 475, rmSourceCountry: "China", curr: "CNY", rmRate: 18, rmCost: 0, machine: "", ct: 0, op: 0, lr: 0, br: 0, processCost: 0, sumCostChildrenOnly: 0, sgnaCost: 0 },
+  { id: 7, parentId: 5, itemType: "OP", itemName: "700 T Prog. Die", level: 3, cost: 0, commodity: "", qty: 1, wt: 0, rmSourceCountry: "China", curr: "CNY", rmRate: 0, rmCost: 0, machine: "700 T Prog. Die", ct: 3, op: 1, lr: 25, br: 250, processCost: 0, sumCostChildrenOnly: 0, sgnaCost: 0 },
+  { id: 8, parentId: 1, itemType: "Comp", itemName: "EPP Block", level: 2, cost: 0, commodity: "", qty: 1, wt: 0, rmSourceCountry: "China", curr: "CNY", rmRate: 0, rmCost: 0, machine: "", ct: 0, op: 0, lr: 0, br: 0, processCost: 0, sumCostChildrenOnly: 0, sgnaCost: 0 },
+  { id: 9, parentId: 8, itemType: "RM", itemName: "EPP Beeds", level: 3, cost: 0, commodity: "", qty: 1, wt: 250, rmSourceCountry: "India", curr: "INR", rmRate: 400, rmCost: 0, machine: "", ct: 0, op: 0, lr: 0, br: 0, processCost: 0, sumCostChildrenOnly: 0, sgnaCost: 0 },
+  { id: 10, parentId: 8, itemType: "OP", itemName: "500T Steam Press", level: 3, cost: 0, commodity: "", qty: 1, wt: 0, rmSourceCountry: "India", curr: "INR", rmRate: 0, rmCost: 0, machine: "500 T Steam Press", ct: 180, op: 2, lr: 5, br: 25, processCost: 0, sumCostChildrenOnly: 0, sgnaCost: 0 },
+  { id: 11, parentId: 1, itemType: "Comp", itemName: "2K Molding", level: 2, cost: 0, commodity: "", qty: 1, wt: 0, rmSourceCountry: "India", curr: "INR", rmRate: 0, rmCost: 0, machine: "", ct: 0, op: 0, lr: 0, br: 0, processCost: 0, sumCostChildrenOnly: 0, sgnaCost: 0 },
+  { id: 12, parentId: 11, itemType: "RM", itemName: "PP", level: 3, cost: 0, commodity: "", qty: 1, wt: 489, rmSourceCountry: "China", curr: "CNY", rmRate: 25, rmCost: 0, machine: "", ct: 0, op: 0, lr: 0, br: 0, processCost: 0, sumCostChildrenOnly: 0, sgnaCost: 0 },
+  { id: 13, parentId: 11, itemType: "RM", itemName: "EPDM", level: 3, cost: 0, commodity: "", qty: 1, wt: 75, rmSourceCountry: "China", curr: "CNY", rmRate: 42, rmCost: 0, machine: "", ct: 0, op: 0, lr: 0, br: 0, processCost: 0, sumCostChildrenOnly: 0, sgnaCost: 0 },
+  { id: 14, parentId: 11, itemType: "OP", itemName: "750 T 2K IM", level: 3, cost: 0, commodity: "", qty: 1, wt: 0, rmSourceCountry: "China", curr: "CNY", rmRate: 0, rmCost: 0, machine: "750 T 2K IM Press", ct: 75, op: 2, lr: 25, br: 250, processCost: 0, sumCostChildrenOnly: 0, sgnaCost: 0 }
+];
+
+    let maxId = Math.max(...data.map(d => d.id));
+    let baselineData = JSON.parse(JSON.stringify(data));
+
+    let whatIfFactors = {
+      rm: 0,       // % change in RM
+      labor: 0,    // % change in Labor
+      burden: 0,   // % change in Burden
+      fx: 0,       // % FX impact
+      tariff: 0,   // % tariff impact
+      volume: 0    // % volume impact
+    };
+
+    // Utility functions
+    function toNum(val) {
+      const n = parseFloat(val);
+      return isNaN(n) ? 0 : n;
+    }
+
+    function getBaselineValue(row, key) {
+      const baseline = baselineData.find(r => r.id === row.id);
+      if (!baseline) return undefined;
+      return baseline[key];
+    }
+
+    function buildTree(arr) {
+      const idMap = new Map();
+      arr.forEach(r => {
+        r.children = [];
+        idMap.set(r.id, r);
+      });
+      const roots = [];
+      arr.forEach(r => {
+        if (r.parentId === -1) {
+          roots.push(r);
+        } else {
+            const parent = idMap.get(r.parentId);
+            if (parent) {
+                parent.children.push(r);
+            }
+        }
+      });
+      return roots;
+    }
+
+    function calculateCosts(node, isBaseline = false) {
+      const qty = Number(node.qty) || 0;
+      const wt = Number(node.wt) || 0;
+
+      let rmRate = Number(node.rmRate) || 0;
+
+      if (node.curr && node.curr !== "USD") {
+        const exchangeRate = exchangeRates[node.curr] || 1;
+        rmRate = rmRate * exchangeRate;
+      }
+      node.rmRateUSD = rmRate;
+      
+      if (!isBaseline) {
+        if (node.curr !== "USD") {
+          rmRate *= (1 + whatIfFactors.fx / 100);
+        }
+        if (node.rmSourceCountry !== "USA") {
+          rmRate *= (1 + whatIfFactors.tariff / 100);
+        }
+        rmRate *= (1 + whatIfFactors.rm / 100);
+      }
+
+      node.rmCost = qty * (wt / 1000) * rmRate;
+
+      const ct = Number(node.ct) || 0;
+      const op = Number(node.op) || 0;
+
+      let lr = Number(node.lr) || 0;
+      let br = Number(node.br) || 0;
+
+      if (!isBaseline) {
+        lr *= (1 + whatIfFactors.labor / 100);
+        br *= (1 + whatIfFactors.burden / 100);
+      }
+
+      node.processCost = ((ct / 3600) * (op * lr)) + ((ct / 3600) * br);
+      node.cost = node.rmCost + node.processCost;
+    }
+    
+    // --- [CORRECTED] BOM Tree Summing Logic ---
+    function computeCostsAndRollups(node, isBaseline = false) {
+      calculateCosts(node, isBaseline);
+      let childrenCostSum = 0;
+      if (node.children && node.children.length > 0) {
+        node.children.forEach(child => {
+          // Recursively call for children and sum up their total rolled-up cost
+          childrenCostSum += computeCostsAndRollups(child, isBaseline);
+        });
+      }
+      
+      const sgnaPercentage = isBaseline ? 
+        financialParams.sgnaPercentage : 
+        (parseFloat(document.getElementById('sgnaPercentageInput').value) || 0);
+      
+      // Calculate final costs based on the node's level
+      if (node.level === 1) {
+        // 'sumOfLevel2TotalCosts' is the sum of its children's total rolled-up costs.
+        const sumOfLevel2TotalCosts = childrenCostSum;
+        // SGA&P Cost is calculated from that sum.
+        node.sgnaCost = sumOfLevel2TotalCosts * (sgnaPercentage / 100);
+        // 'Ext Total Cost' (stored in sumCostChildrenOnly) is the sum of L2 costs + SGA&P.
+        node.sumCostChildrenOnly = sumOfLevel2TotalCosts + node.sgnaCost;
+        // The inclusive cost for KPI purposes is this final Ext Total Cost.
+        node.sumCostInclusive = node.sumCostChildrenOnly;
+      } else { 
+        // For levels 2 and below, 'Total Cost' is its own cost + children's rolled-up cost.
+        node.sumCostInclusive = (node.cost || 0) + childrenCostSum;
+        // No SGA&P or Ext Total Cost at these levels.
+        node.sgnaCost = 0;
+        node.sumCostChildrenOnly = 0;
+      }
+      
+      // Return the total rolled-up cost for the parent's calculation
+      return node.sumCostInclusive;
+    }
+
+    function storeBaselineValues() {
+      const roots = buildTree(baselineData);
+      roots.forEach(root => {
+        computeCostsAndRollups(root, true);
+      });
+    }
+
+    function updateBaselineData() {
+      data.forEach(row => {
+        const baselineRow = baselineData.find(r => r.id === row.id);
+        if (baselineRow) {
+          editableKeys.forEach(key => {
+            if (row[key] !== undefined) {
+              baselineRow[key] = row[key];
+            }
+          });
+        }
+      });
+      storeBaselineValues();
+    }
+    
+    function calculateCashFlows(totalUnitCost, isBaseline = false) {
+      const cashFlows = [];
+      let discountRate, sellPrice;
+
+      if (isBaseline) {
+        discountRate = financialParams.discountRate;
+        sellPrice = financialParams.sellPrice;
+      } else {
+        discountRate = (toNum(document.getElementById('discountRateInput').value)) / 100;
+        sellPrice = toNum(document.getElementById('sellPriceInput').value);
+      }
+      
+      let volumes = [...financialParams.yearlyVolumes];
+      if (!isBaseline) {
+        volumes = volumes.map(v => v * (1 + whatIfFactors.volume / 100));
+      }
+      
+      for (let year = 0; year <= financialParams.programYears; year++) {
+        const investment = financialParams.yearlyInvestments[year] || 0;
+        const revenue = year === 0 ? 0 : volumes[year] * sellPrice;
+        const cogs = year === 0 ? 0 : totalUnitCost * volumes[year];
+        const netCashFlow = revenue - cogs - investment;
+        const discountedCashFlow = netCashFlow / Math.pow(1 + discountRate, year);
+        cashFlows.push({ year, volume: volumes[year] || 0, investment, revenue, cogs, netCashFlow, discountedCashFlow });
+      }
+      return cashFlows;
+    }
+
+    // IRR calculation using Newton-Raphson method
+    function calculateIRR(cashFlows, guess = 0.1) {
+      const maxIterations = 1000;
+      const precision = 1e-7;
+      let rate = guess;
+      function npv(rate) {
+        return cashFlows.reduce((sum, cf) => sum + cf.netCashFlow / Math.pow(1 + rate, cf.year), 0);
+      }
+      function npvDerivative(rate) {
+        return cashFlows.reduce((sum, cf) => sum - (cf.year * cf.netCashFlow) / Math.pow(1 + rate, cf.year + 1), 0);
+      }
+      for (let i = 0; i < maxIterations; i++) {
+        const value = npv(rate);
+        const deriv = npvDerivative(rate);
+        if (deriv === 0) break;
+        const newRate = rate - value / deriv;
+        if (Math.abs(newRate - rate) < precision) return newRate;
+        rate = newRate;
+      }
+      return NaN; // IRR did not converge
+    }
+
+    function calculateKPIs() {
+      const roots = buildTree(JSON.parse(JSON.stringify(data)));
+      const whatIfRoot = roots[0];
+      computeCostsAndRollups(whatIfRoot, false);
+      const whatIfTotalCost = whatIfRoot.sumCostInclusive || 0;
+
+      const baselineRoots = buildTree(JSON.parse(JSON.stringify(baselineData)));
+      const baselineRoot = baselineRoots[0];
+      computeCostsAndRollups(baselineRoot, true);
+      const baselineTotalCost = baselineRoot.sumCostInclusive || 0;
+
+      const baselineCashFlows = calculateCashFlows(baselineTotalCost, true);
+      const whatIfCashFlows = calculateCashFlows(whatIfTotalCost, false);
+
+      const baselineNPV = baselineCashFlows.reduce((sum, cf) => sum + cf.discountedCashFlow, 0);
+      const whatIfNPV = whatIfCashFlows.reduce((sum, cf) => sum + cf.discountedCashFlow, 0);
+
+      const baselineTotalRevenue = baselineCashFlows.reduce((sum, cf) => sum + cf.revenue, 0);
+      const whatIfTotalRevenue = whatIfCashFlows.reduce((sum, cf) => sum + cf.revenue, 0);
+
+      const baselineTotalCOGS = baselineCashFlows.reduce((sum, cf) => sum + cf.cogs, 0);
+      const whatIfTotalCOGS = whatIfCashFlows.reduce((sum, cf) => sum + cf.cogs, 0);
+
+      const baselineMargin = baselineTotalRevenue > 0 ? ((baselineTotalRevenue - baselineTotalCOGS) / baselineTotalRevenue) * 100 : 0;
+      const whatIfMargin = whatIfTotalRevenue > 0 ? ((whatIfTotalRevenue - whatIfTotalCOGS) / whatIfTotalRevenue) * 100 : 0;
+
+      const baselineIRR = calculateIRR(baselineCashFlows);
+      const whatIfIRR = calculateIRR(whatIfCashFlows);
+
+      const kpis = {
+        totalCost: { baseline: baselineTotalCost, whatIf: whatIfTotalCost, icon: "💰", color: "blue", label: "Total Cost" },
+        npv: { 
+          baseline: baselineNPV, 
+          whatIf: whatIfNPV, 
+          icon: "💲", 
+          color: "orange", 
+          label: "Program NPV",
+          format: val => '$' + (val / 1000000).toFixed(1) + ' M'
+        },
+        totalRevenue: { 
+          baseline: baselineTotalRevenue, 
+          whatIf: whatIfTotalRevenue, 
+          icon: "💵", 
+          color: "teal", 
+          label: "Total Revenue",
+          format: val => '$' + (val / 1000000).toFixed(1) + ' M'
+        },
+        grossMargin: { baseline: baselineMargin, whatIf: whatIfMargin, icon: "📊", color: "gold", label: "Gross Margin %" },
+        irr: { 
+          baseline: isNaN(baselineIRR) ? 0 : baselineIRR * 100, 
+          whatIf: isNaN(whatIfIRR) ? 0 : whatIfIRR * 100, 
+          icon: "˗ˋˏ$ˎˊ˗", 
+          color: "purple", 
+          label: "Program IRR %" 
+        }
+      };
+
+      renderKPIs(kpis);
+      renderCashFlowTable(whatIfCashFlows);
+    }
+
+    function renderKPIs(kpis) {
+      const container = document.getElementById('kpi-cards');
+      container.innerHTML = '';
+      Object.keys(kpis).forEach(key => {
+        const kpi = kpis[key];
+        const change = kpi.whatIf - kpi.baseline;
+        const pctChange = kpi.baseline !== 0 ? (change / Math.abs(kpi.baseline)) * 100 : 0;
+        const isPositiveChangeGood = ['npv', 'totalRevenue', 'grossMargin', 'irr'].includes(key);
+
+        let changeClass = '';
+        if (pctChange > 0.1) changeClass = isPositiveChangeGood ? 'change-positive' : 'change-negative';
+        if (pctChange < -0.1) changeClass = isPositiveChangeGood ? 'change-negative' : 'change-positive';
+
+        const changeIcon = changeClass === 'change-positive' ? '🡹' : (changeClass === 'change-negative' ? '🡻' : '');
+        const isPercentage = key === 'grossMargin' || key === 'irr';
+
+        // Format values for display
+        let baselineDisplay, whatIfDisplay;
+        
+        if (key === 'npv' || key === 'totalRevenue') {
+          // Format as "$ 12.3 M" for NPV and Revenue
+          baselineDisplay = `$ ${(kpi.baseline / 1000000).toFixed(1)} M`;
+          whatIfDisplay = `$ ${(kpi.whatIf / 1000000).toFixed(1)} M`;
+        } else if (key === 'totalCost') {
+          // Format Total Cost with 2 decimal places
+          baselineDisplay = `$${kpi.baseline.toFixed(2)}`;
+          whatIfDisplay = `$${kpi.whatIf.toFixed(2)}`;
+        } else if (isPercentage) {
+          // Format percentages
+          baselineDisplay = `${kpi.baseline.toFixed(1)}%`;
+          whatIfDisplay = `${kpi.whatIf.toFixed(1)}%`;
+        } else {
+          // Format other values normally
+          baselineDisplay = `$${kpi.baseline.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+          whatIfDisplay = `$${kpi.whatIf.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+        }
+
+        const cardHTML = `
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-icon ${kpi.color}">${kpi.icon}</div>
+              <div class="kpi-title">${kpi.label}</div>
+            </div>
+            <div class="kpi-sections">
+              <div class="kpi-section baseline-section">
+                <div class="section-label">Baseline</div>
+                <div class="kpi-value">${baselineDisplay}</div>
+              </div>
+              <div class="kpi-section whatif-section">
+                <div class="section-label">What-If</div>
+                <div class="kpi-value">${whatIfDisplay}</div>
+                <div class="change-container ${changeClass}">
+                  ${changeIcon} ${pctChange.toFixed(1)}%
+                </div>
+              </div>
+            </div>
+          </div>`;
+        container.innerHTML += cardHTML;
+      });
+    }
+    
+    function renderCashFlowTable(cashFlows) {
+        const tbody = document.getElementById('cashflow-body');
+        tbody.innerHTML = '';
+        cashFlows.forEach(cf => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>Year ${cf.year}</td>
+                <td>${cf.volume.toLocaleString()}</td>
+                <td>$${cf.investment.toLocaleString()}</td>
+                <td>$${cf.revenue.toLocaleString()}</td>
+                <td>$${cf.cogs.toLocaleString()}</td>
+                <td>$${cf.netCashFlow.toLocaleString()}</td>
+                <td>$${cf.discountedCashFlow.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderTable() {
+      const flatData = [];
+      function flattenTree(nodes, level) {
+          nodes.forEach(node => {
+              node.level = level;
+              flatData.push(node);
+              if (node.children && node.children.length > 0) {
+                  flattenTree(node.children, level + 1);
+              }
+          });
+      }
+
+      const currentData = JSON.parse(JSON.stringify(data));
+      const roots = buildTree(currentData);
+      roots.forEach(root => computeCostsAndRollups(root, false));
+      flattenTree(roots, 1);
+
+      const tableHead = document.getElementById('table-head-row');
+      const tableBody = document.getElementById('table-body-rows');
+      tableHead.innerHTML = '';
+      tableBody.innerHTML = '';
+
+      columns.forEach(col => {
+          const th = document.createElement('th');
+          th.textContent = col.label;
+          th.style.width = col.width || 'auto';
+          tableHead.appendChild(th);
+      });
+
+      flatData.forEach(row => {
+          const tr = document.createElement('tr');
+          columns.forEach(col => {
+              if (col.showCondition && !col.showCondition(row)) {
+                  const td = document.createElement('td');
+                  td.className = 'sum-cell';
+                  tr.appendChild(td);
+                  return;
+              }
+
+              const td = document.createElement('td');
+              
+              if (col.formula) {
+                  td.textContent = col.formula(row);
+                  td.className = 'sum-cell';
+              } else if (col.key === 'actions') {
+                  td.innerHTML = `
+                      <div class="compact-controls">
+                          <button class="action-btn add-btn" data-id="${row.id}" title="Add Child">+</button>
+                          ${row.parentId !== -1 ? `<button class="action-btn delete-btn" data-id="${row.id}" title="Delete">-</button>` : ''}
+                      </div>`;
+              } else if (col.key === 'itemType') {
+                  const select = document.createElement('select');
+                  itemTypeOptions.forEach(opt => {
+                      const option = document.createElement('option');
+                      option.value = opt.key;
+                      option.textContent = `${opt.icon} ${opt.label}`;
+                      if (row.itemType === opt.key) option.selected = true;
+                      select.appendChild(option);
+                  });
+                  select.dataset.key = 'itemType';
+                  select.dataset.id = row.id;
+                  td.appendChild(select);
+              } else if (col.key === 'rmSourceCountry') {
+                   const select = document.createElement('select');
+                   Object.keys(countryCurrencyMap).forEach(country => {
+                       const option = document.createElement('option');
+                       option.value = country;
+                       option.textContent = country;
+                       if(row.rmSourceCountry === country) option.selected = true;
+                       select.appendChild(option);
+                   });
+                   select.dataset.key = 'rmSourceCountry';
+                   select.dataset.id = row.id;
+                   td.appendChild(select);
+              } else {
+                  let content;
+                  if (col.key === 'itemName') {
+                      content = `
+                          <div class="bom-indent level-${row.level}">
+                              <span class="icon">${itemTypeOptions.find(o => o.key === row.itemType)?.icon || '📦'}</span>
+                              <div class="cell-wrapper">
+                                  <input type="text" value="${row[col.key] || ''}" data-key="${col.key}" data-id="${row.id}">
+                              </div>
+                          </div>`;
+                  } else {
+                       const inputType = typeof row[col.key] === 'number' ? 'number' : 'text';
+                       const isCurrency = ['rmRate', 'lr', 'br'].includes(col.key);
+                       const symbol = currencySymbols[row.curr] || '$';
+                       
+                       content = `
+                          <div class="cell-wrapper">
+                              <div class="${isCurrency ? 'currency-input' : ''}">
+                                 ${isCurrency ? `<span class="currency-symbol">${symbol}</span>` : ''}
+                                 <input type="${inputType}" value="${row[col.key] || ''}" data-key="${col.key}" data-id="${row.id}" ${inputType === 'number' ? 'step="any"' : ''}>
+                              </div>
+                          </div>`;
+                  }
+                  td.innerHTML = content;
+              }
+              tr.appendChild(td);
+          });
+          tableBody.appendChild(tr);
+      });
+  }
+
+    function handleTableInput(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+            const id = parseInt(e.target.dataset.id);
+            const key = e.target.dataset.key;
+            const value = e.target.type === 'number' ? toNum(e.target.value) : e.target.value;
+            
+            const row = data.find(r => r.id === id);
+            if (row && row[key] !== value) {
+                row[key] = value;
+                if(key === 'rmSourceCountry'){
+                  row.curr = countryCurrencyMap[value] || 'USD';
+                }
+                updateBaselineData();
+                recalculateAndRender();
+            }
+        }
+    }
+    
+    function handleTableActions(e) {
+        if (e.target.classList.contains('add-btn')) {
+            const parentId = parseInt(e.target.dataset.id);
+            const parent = data.find(p => p.id === parentId);
+            maxId++;
+            const newItem = {
+                id: maxId,
+                parentId: parentId,
+                itemType: "PP",
+                itemName: "New Part",
+                level: parent.level + 1,
+                cost: 0,
+                commodity: "Part",
+                qty: 1,
+                wt: 1,
+                rmSourceCountry: "USA",
+                curr: "USD",
+                rmRate: 10,
+                rmCost: 0,
+                machine: "M1",
+                ct: 5,
+                op: 1,
+                lr: 20,
+                br: 30,
+                processCost: 0
+            };
+            data.push(newItem);
+            baselineData.push(JSON.parse(JSON.stringify(newItem)));
+            recalculateAndRender();
+        } else if (e.target.classList.contains('delete-btn')) {
+            const id = parseInt(e.target.dataset.id);
+            data = data.filter(d => d.id !== id);
+            baselineData = baselineData.filter(d => d.id !== id);
+            recalculateAndRender();
+        }
+    }
+
+    function handleFinancialInput() {
+        financialParams.sellPrice = toNum(document.getElementById('sellPriceInput').value);
+        financialParams.discountRate = toNum(document.getElementById('discountRateInput').value) / 100;
+        financialParams.sgnaPercentage = toNum(document.getElementById('sgnaPercentageInput').value);
+        recalculateAndRender();
+    }
+
+    function handleSliderInput(e) {
+        const sliderId = e.target.id;
+        const value = parseInt(e.target.value);
+        
+        switch(sliderId) {
+            case 'rmSlider': 
+                whatIfFactors.rm = value;
+                document.getElementById('rmVal').textContent = `${value}%`;
+                break;
+            case 'laborSlider':
+                whatIfFactors.labor = value;
+                document.getElementById('laborVal').textContent = `${value}%`;
+                break;
+            case 'burdenSlider':
+                whatIfFactors.burden = value;
+                document.getElementById('burdenVal').textContent = `${value}%`;
+                break;
+            case 'fxSlider':
+                whatIfFactors.fx = value;
+                document.getElementById('fxVal').textContent = `${value}%`;
+                break;
+            case 'tariffSlider':
+                whatIfFactors.tariff = value;
+                document.getElementById('tariffVal').textContent = `${value}%`;
+                break;
+            case 'volumeSlider':
+                whatIfFactors.volume = value;
+                document.getElementById('volumeVal').textContent = `${value}%`;
+                break;
+        }
+        recalculateAndRender();
+    }
+    
+    function resetToBaseline() {
+        ['rm', 'labor', 'burden', 'fx', 'tariff', 'volume'].forEach(key => whatIfFactors[key] = 0);
+        
+        document.getElementById('rmSlider').value = 0;
+        document.getElementById('laborSlider').value = 0;
+        document.getElementById('burdenSlider').value = 0;
+        document.getElementById('fxSlider').value = 0;
+        document.getElementById('tariffSlider').value = 0;
+        document.getElementById('volumeSlider').value = 0;
+
+        document.getElementById('rmVal').textContent = '0%';
+        document.getElementById('laborVal').textContent = '0%';
+        document.getElementById('burdenVal').textContent = '0%';
+        document.getElementById('fxVal').textContent = '0%';
+        document.getElementById('tariffVal').textContent = '0%';
+        document.getElementById('volumeVal').textContent = '0%';
+
+        recalculateAndRender();
+    }
+
+    function recalculateAndRender() {
+        renderTable();
+        calculateKPIs();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        storeBaselineValues();
+        recalculateAndRender();
+
+        const bomTable = document.getElementById('bom-table');
+        bomTable.addEventListener('change', handleTableInput);
+        bomTable.addEventListener('click', handleTableActions);
+        
+        document.getElementById('sellPriceInput').addEventListener('change', handleFinancialInput);
+        document.getElementById('discountRateInput').addEventListener('change', handleFinancialInput);
+        document.getElementById('sgnaPercentageInput').addEventListener('change', handleFinancialInput);
+        
+        const whatIfPanel = document.getElementById('whatIfPanel');
+        whatIfPanel.addEventListener('input', handleSliderInput);
+        
+        document.getElementById('baselineBtn').addEventListener('click', resetToBaseline);
+
+        const toggleBtn = document.getElementById('toggleWhatIf');
+        toggleBtn.addEventListener('click', () => {
+            whatIfPanel.classList.toggle('active');
+            toggleBtn.classList.toggle('active');
+        });
+
+        const toggleCashFlowBtn = document.getElementById('toggleCashFlowTable');
+        toggleCashFlowBtn.addEventListener('click', () => {
+            const table = document.getElementById('cashflow-table');
+            table.style.display = table.style.display === 'none' ? 'table' : 'none';
+        });
+    });
+  </script>
+</body>
+</html>
