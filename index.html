@@ -703,6 +703,122 @@
         padding: 0 12px;
       }
     }
+    /* New styles for command interface */
+    .command-interface {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+    
+    .command-button {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: all 0.3s ease;
+    }
+    
+    .command-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    }
+    
+    .command-interface.active .command-button {
+      transform: rotate(45deg);
+    }
+    
+    .command-panel {
+      position: absolute;
+      bottom: 70px;
+      right: 0;
+      width: 350px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      padding: 16px;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .command-interface.active .command-panel {
+      display: flex;
+    }
+    
+    .command-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+    
+    .command-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      resize: none;
+      min-height: 60px;
+      box-sizing: border-box;
+    }
+    
+    .command-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .command-examples {
+      font-size: 12px;
+      color: var(--secondary);
+      line-height: 1.4;
+    }
+    
+    .command-submit {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      align-self: flex-end;
+    }
+    
+    .command-submit:hover {
+      opacity: 0.9;
+    }
+    
+    .command-response {
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+    
+    .command-response.success {
+      background: #f0fdf4;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+      display: block;
+    }
+    
+    .command-response.error {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -826,6 +942,24 @@
         </thead>
         <tbody id="table-body-rows"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- New command interface -->
+  <div class="command-interface" id="commandInterface">
+    <button class="command-button">+</button>
+    <div class="command-panel">
+      <div class="command-title">What-If Command</div>
+      <textarea class="command-input" id="commandInput" placeholder="Type a command like 'RM Rate increase by 5%' or 'Reset all values'"></textarea>
+      <div class="command-examples">
+        Examples:<br>
+        • "RM Rate increase by 5%"<br>
+        • "Labor Rate decrease 10%"<br>
+        • "Reset all values"<br>
+        • "Volume impact up 15%"
+      </div>
+      <button class="command-submit" id="commandSubmit">Apply</button>
+      <div class="command-response" id="commandResponse"></div>
     </div>
   </div>
 
@@ -1522,6 +1656,142 @@ let data = [
             const table = document.getElementById('cashflow-table');
             table.style.display = table.style.display === 'none' ? 'table' : 'none';
         });
+    });
+
+    // New function to process text commands
+    function processCommand(command) {
+      const responseEl = document.getElementById('commandResponse');
+      responseEl.className = 'command-response';
+      
+      // Convert to lowercase for easier processing
+      const lowerCommand = command.toLowerCase().trim();
+      
+      // Check for reset command
+      if (lowerCommand.includes('reset') || lowerCommand.includes('clear') || lowerCommand.includes('baseline')) {
+        resetToBaseline();
+        showResponse('All values reset to baseline', 'success');
+        return true;
+      }
+      
+      // Define parameter mappings
+      const paramMappings = {
+        'rm': { slider: 'rmSlider', value: 'rmVal', factor: 'rm', aliases: ['rm', 'raw material', 'material'] },
+        'labor': { slider: 'laborSlider', value: 'laborVal', factor: 'labor', aliases: ['labor', 'labour', 'lr'] },
+        'burden': { slider: 'burdenSlider', value: 'burdenVal', factor: 'burden', aliases: ['burden', 'mhr', 'variable'] },
+        'fx': { slider: 'fxSlider', value: 'fxVal', factor: 'fx', aliases: ['fx', 'currency', 'exchange'] },
+        'tariff': { slider: 'tariffSlider', value: 'tariffVal', factor: 'tariff', aliases: ['tariff', 'duty'] },
+        'volume': { slider: 'volumeSlider', value: 'volumeVal', factor: 'volume', aliases: ['volume', 'vol'] }
+      };
+      
+      // Check for percentage change
+      const percentageMatch = command.match(/(\d+)%/);
+      if (!percentageMatch) {
+        showResponse('Please specify a percentage value (e.g., "5%")', 'error');
+        return false;
+      }
+      
+      const percentage = parseInt(percentageMatch[1]);
+      const isIncrease = lowerCommand.includes('increase') || lowerCommand.includes('up') || lowerCommand.includes('+');
+      const isDecrease = lowerCommand.includes('decrease') || lowerCommand.includes('down') || lowerCommand.includes('reduce') || lowerCommand.includes('-');
+      
+      if (!isIncrease && !isDecrease) {
+        showResponse('Please specify increase or decrease (e.g., "increase by 5%")', 'error');
+        return false;
+      }
+      
+      const finalPercentage = isIncrease ? percentage : -percentage;
+      
+      // Find which parameter to adjust
+      let matchedParam = null;
+      
+      for (const [param, data] of Object.entries(paramMappings)) {
+        for (const alias of data.aliases) {
+          if (lowerCommand.includes(alias)) {
+            matchedParam = param;
+            break;
+          }
+        }
+        if (matchedParam) break;
+      }
+      
+      if (!matchedParam) {
+        showResponse('Could not determine which parameter to adjust. Try being more specific.', 'error');
+        return false;
+      }
+      
+      // Apply the change
+      const paramData = paramMappings[matchedParam];
+      const sliderEl = document.getElementById(paramData.slider);
+      const valueEl = document.getElementById(paramData.value);
+      
+      // For tariff, ensure it doesn't go below 0
+      if (matchedParam === 'tariff' && finalPercentage < 0) {
+        showResponse('Tariff cannot be negative. Setting to 0%.', 'error');
+        sliderEl.value = 0;
+        valueEl.textContent = '0%';
+        whatIfFactors[paramData.factor] = 0;
+      } else {
+        sliderEl.value = finalPercentage;
+        valueEl.textContent = `${finalPercentage}%`;
+        whatIfFactors[paramData.factor] = finalPercentage;
+      }
+      
+      // Update the display and recalculate
+      recalculateAndRender();
+      
+      const action = isIncrease ? 'increased' : 'decreased';
+      showResponse(`${paramData.aliases[0].toUpperCase()} ${action} by ${percentage}%`, 'success');
+      return true;
+    }
+    
+    function showResponse(message, type) {
+      const responseEl = document.getElementById('commandResponse');
+      responseEl.textContent = message;
+      responseEl.className = `command-response ${type}`;
+      
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        responseEl.className = 'command-response';
+      }, 3000);
+    }
+    
+    // Add event listeners for command interface
+    document.addEventListener('DOMContentLoaded', () => {
+      // Previous event listeners remain
+      
+      // New event listeners for command interface
+      const commandInterface = document.getElementById('commandInterface');
+      const commandSubmit = document.getElementById('commandSubmit');
+      const commandInput = document.getElementById('commandInput');
+      
+      commandInterface.addEventListener('click', (e) => {
+        if (e.target.classList.contains('command-button')) {
+          commandInterface.classList.toggle('active');
+          if (commandInterface.classList.contains('active')) {
+            commandInput.focus();
+          }
+        }
+      });
+      
+      commandSubmit.addEventListener('click', () => {
+        processCommand(commandInput.value);
+        commandInput.value = '';
+      });
+      
+      commandInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          processCommand(commandInput.value);
+          commandInput.value = '';
+        }
+      });
+      
+      // Close command panel when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!commandInterface.contains(e.target) && commandInterface.classList.contains('active')) {
+          commandInterface.classList.remove('active');
+        }
+      });
     });
   </script>
 </body>
