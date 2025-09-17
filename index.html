@@ -956,7 +956,8 @@
         • "RM Rate increase by 5%"<br>
         • "Labor Rate decrease 10%"<br>
         • "Reset all values"<br>
-        • "Volume impact up 15%"
+        • "Volume impact up 15%"<br>
+        • "Do sensitivity analysis at SOP"
       </div>
       <button class="command-submit" id="commandSubmit">Apply</button>
       <div class="command-response" id="commandResponse"></div>
@@ -1658,6 +1659,27 @@ let data = [
         });
     });
 
+    // New function to perform sensitivity analysis
+    function performSensitivityAnalysis() {
+        // Reset to baseline first
+        resetToBaseline();
+        
+        // Set RM Rate to +10%
+        whatIfFactors.rm = 10;
+        document.getElementById('rmSlider').value = 10;
+        document.getElementById('rmVal').textContent = '10%';
+        
+        // Set Labor Rate to +15%
+        whatIfFactors.labor = 15;
+        document.getElementById('laborSlider').value = 15;
+        document.getElementById('laborVal').textContent = '15%';
+        
+        // Recalculate and update UI
+        recalculateAndRender();
+        
+        return "Sensitivity analysis performed: RM Rate increased by 10%, Labor Rate increased by 15%";
+    }
+    
     // New function to process text commands
     function processCommand(command) {
       const responseEl = document.getElementById('commandResponse');
@@ -1665,11 +1687,11 @@ let data = [
       
       // Convert to lowercase for easier processing
       const lowerCommand = command.toLowerCase().trim();
-      
-      // Check for reset command
-      if (lowerCommand.includes('reset') || lowerCommand.includes('clear') || lowerCommand.includes('baseline')) {
-        resetToBaseline();
-        showResponse('All values reset to baseline', 'success');
+
+      // Check for sensitivity analysis command
+      if (lowerCommand.includes('sensitivity analysis') || lowerCommand.includes('sensitivity at sop')) {
+        const result = performSensitivityAnalysis();
+        showResponse(result, 'success');
         return true;
       }
       
