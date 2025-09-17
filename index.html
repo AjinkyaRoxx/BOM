@@ -1694,6 +1694,13 @@ let data = [
         showResponse(result, 'success');
         return true;
       }
+
+      // Check for reset command
+      if (lowerCommand.includes('reset') || lowerCommand.includes('clear') || lowerCommand.includes('baseline')) {
+        resetToBaseline();
+        showResponse('All values reset to baseline', 'success');
+        return true;
+      }
       
       // Define parameter mappings
       const paramMappings = {
