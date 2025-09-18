@@ -949,8 +949,8 @@
   <div class="command-interface" id="commandInterface">
     <button class="command-button">+</button>
     <div class="command-panel">
-      <div class="command-title">What-If Command</div>
-      <textarea class="command-input" id="commandInput" placeholder="Type a command like 'RM Rate increase by 5%' or 'Reset all values'"></textarea>
+      <div class="command-title">Agentic AI Chat-Bot</div>
+      <textarea class="command-input" id="commandInput" placeholder="How can I help you ?"></textarea>
       <div class="command-examples">
         Examples:<br>
         • "RM Rate increase by 5%"<br>
@@ -959,6 +959,8 @@
         • "Volume impact up 15%"<br>
         • "Do sensitivity analysis at SOP"
       </div>
+      <!-- Put this where you want the message to display -->
+      <p id="sensitivityResult" style="font-weight:bold; color:green;"></p>
       <button class="command-submit" id="commandSubmit">Apply</button>
       <div class="command-response" id="commandResponse"></div>
     </div>
@@ -1677,8 +1679,20 @@ let data = [
         // Recalculate and update UI
         recalculateAndRender();
         
-        return "Sensitivity analysis performed: RM Rate increased by 10%, Labor Rate increased by 15%";
+        //return "Sensitivity analysis performed: RM Rate increased by 10%, Labor Rate increased by 15%";
+
+          // Show the message on screen
+    const msg = "Sensitivity analysis performed: RM Rate increased by 10%, Labor Rate increased by 15%";
+    const resultEl = document.getElementById("sensitivityResult");
+    resultEl.textContent = msg;
+
+    // Clear it after 1 minute (60,000 ms)
+    setTimeout(() => {
+        resultEl.textContent = "";
+    }, 60000);
+
     }
+  
     
     // New function to process text commands
     function processCommand(command) {
